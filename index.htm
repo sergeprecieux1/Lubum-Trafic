@@ -1,0 +1,238 @@
+# Lubum-Trafic
+Application de mobilité et de circulation a lubumbashi
+HTML
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lubum-Trafic</title>
+
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f5f8;
+      color: #172033;
+    }
+
+    header {
+      background: #073b75;
+      color: white;
+      padding: 18px 15px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 25px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: white;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #ccd4df;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #087b48;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gps-button {
+      display: block;
+      width: calc(100% - 24px);
+      margin: 0 12px 12px;
+      background: #073b75;
+    }
+
+    #map {
+      height: 55vh;
+      min-height: 300px;
+      width: 100%;
+      background: #e2e8f0;
+    }
+
+    #message {
+      padding: 14px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    footer {
+      padding: 15px;
+      text-align: center;
+      color: #5b6575;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Lubum-Trafic</h1>
+    <p>Explore Lubumbashi et prépare tes déplacements</p>
+  </header>
+
+  <div class="search-box">
+    <input
+      id="destination"
+      type="text"
+      placeholder="Rechercher un lieu..."
+    >
+    <button onclick="searchPlace()">Rechercher</button>
+  </div>
+
+  <button class="gps-button" onclick="locateMe()">
+    📍 Ma position
+  </button>
+
+  <div id="map"></div>
+
+  <div id="message">
+    Bienvenue ! Recherche un lieu ou active ta position GPS.
+  </div>
+
+  <footer>
+    Lubum-Trafic · Carte © OpenStreetMap
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const map = L.map('map').setView(
+      [-11.6642, 27.4826],
+      12
+    );
+
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }
+    ).addTo(map);
+
+    let marker = null;
+
+    function showPlace(lat, lon, title) {
+      map.setView([lat, lon], 16);
+
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      marker = L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup(title)
+        .openPopup();
+    }
+
+    async function searchPlace() {
+      const place = document
+        .getElementById('destination')
+        .value.trim();
+
+      const message = document.getElementById('message');
+
+      if (!place) {
+        message.textContent =
+          'Entre le nom du lieu à rechercher.';
+        return;
+      }
+
+      message.textContent = 'Recherche en cours...';
+
+      try {
+        const url =
+          'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
+          encodeURIComponent(place + ', Lubumbashi, RDC');
+
+        const response = await fetch(url);
+        const results = await response.json();
+
+        if (!results.length) {
+          message.textContent =
+            'Lieu introuvable. Essaie un autre nom.';
+          return;
+        }
+
+        const result = results[0];
+
+        showPlace(
+          Number(result.lat),
+          Number(result.lon),
+          result.display_name
+        );
+
+        message.textContent =
+          'Lieu trouvé : ' + result.display_name;
+      } catch (error) {
+        message.textContent =
+          'Erreur de connexion. Réessaie plus tard.';
+      }
+    }
+
+    function locateMe() {
+      const message = document.getElementById('message');
+
+      if (!navigator.geolocation) {
+        message.textContent =
+          'Le GPS n’est pas disponible sur cet appareil.';
+        return;
+      }
+
+      message.textContent =
+        'Recherche de ta position GPS...';
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          showPlace(lat, lon, 'Tu es ici');
+
+          message.textContent =
+            'Position GPS obtenue avec succès.';
+        },
+        function() {
+          message.textContent =
+            'Position inaccessible. Autorise le GPS et réessaie.';
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000
+        }
+      );
+    }
+  </script>
+</body>
+</html>
