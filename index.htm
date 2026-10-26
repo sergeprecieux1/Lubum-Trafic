@@ -234,5 +234,58 @@ HTML
       );
     }
   </script>
-</body>
+HTML
+
+<section id="signalement" style="background:white;padding:16px;margin:15px;border-radius:12px;font-family:Arial,sans-serif">
+  <h2>🚦 État de la circulation</h2>
+  <p>Signalez la situation sur votre avenue à Lubumbashi.</p>
+
+  <label for="avenue">Nom de l'avenue :</label>
+  <input id="avenue" type="text" placeholder="Ex. Avenue Lumumba"
+    style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box">
+
+  <label for="etat">État du trafic :</label>
+  <select id="etat" style="width:100%;padding:12px;margin:8px 0">
+    <option value="green">🟢 Circulation fluide</option>
+    <option value="orange">🟠 Circulation ralentie</option>
+    <option value="red">🔴 Embouteillage</option>
+    <option value="black">⛔ Route bloquée</option>
+  </select>
+
+  <button type="button" onclick="signalerTrafic()"
+    style="width:100%;padding:14px;background:#073b75;color:white;border:0;border-radius:8px;font-size:16px">
+    Signaler la circulation
+  </button>
+
+  <p id="messageTrafic" role="status"></p>
+  <ul id="listeTrafic"></ul>
+</section>
+
+<script>
+function signalerTrafic() {
+  const avenue = document.getElementById('avenue').value.trim();
+  const etat = document.getElementById('etat');
+  const message = document.getElementById('messageTrafic');
+
+  if (!avenue) {
+    message.textContent = "Entrez d'abord le nom de l'avenue.";
+    return;
+  }
+
+  const noms = {
+    green: "🟢 Circulation fluide",
+    orange: "🟠 Circulation ralentie",
+    red: "🔴 Embouteillage",
+    black: "⛔ Route bloquée"
+  };
+
+  const item = document.createElement('li');
+  item.textContent = avenue + " — " + noms[etat.value];
+  document.getElementById('listeTrafic').prepend(item);
+
+  message.textContent = "Signalement ajouté sur cet appareil.";
+  document.getElementById('avenue').value = "";
+}
+</script>
+
 </html>
